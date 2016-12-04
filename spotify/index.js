@@ -1,32 +1,24 @@
 'use strict';
 
 let SpotifyWebApi = require('spotify-web-api-node');
-let Promise = require('bluebird');
 let createPlaylist = require('./createPlaylist');
-var argv = require('minimist')(process.argv.slice(2));
+let Promise = require('bluebird');
 let _ = require('lodash');
 
-let AUDIO_ATTRIBUTES = ['acousticness','danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'tempo', 'valence']
+let AUDIO_FEATURES = ['acousticness','danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'tempo', 'valence']
 
-// credentials are optional
-let spotifyApi = new SpotifyWebApi({
-  clientId : argv.id || argv._[0],
-  clientSecret : argv.secret || argv._[1]
-});
-
-let getToken = spotifyApi.clientCredentialsGrant()
-  .then(response => response.body.access_token)
+let spotifyApi = new SpotifyWebApi();
 
 let getRecommendationByTrack = (track, seedTrackId) => {
   let query = {
     seed_tracks: [seedTrackId]
   };
 
-  AUDIO_ATTRIBUTES.forEach(attr => query['target_' + attr] = track[attr]);
+  AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track[attr]);
 
   // https://developer.spotify.com/web-api/get-recommendations/
   let mapTrackIds = (response) => {
-    let tracks = response.body.tracks.slice(0, 1);
+    let tracks = response.body.tracks;
     let trackIds = tracks.map(track => track.id);
     return spotifyApi.getAudioFeaturesForTracks(trackIds)
       .then(response => _.keyBy(response.body.audio_features, 'id'))
@@ -54,10 +46,19 @@ let getPlaylistBySeeds = (originId, destId) => {
     .then(recommendations => createPlaylist(...recommendations));
 };
 
-getToken.then(token => spotifyApi.setAccessToken(token))
-  .then(() => {
-    // Bruno Mars - When I Was Your Man => Bruno Mars - 24K Magic
-    return getPlaylistBySeeds('0nJW01T7XtvILxQgC5J7Wh','6b8Be6ljOzmkOmFslEb23P');
-  })
-  .then(playlist => console.log(playlist.map(track => track.id)))
-  .catch(response => console.error(response));
+module.exports = function initialize(clientId, clientSecret) {
+
+  spotifyApi.setCredentials({
+    clientId : clientId,
+    clientSecret : clientSecret
+  });
+
+  return spotifyApi.clientCredentialsGrant()
+    .then(response => spotifyApi.setAccessToken(response.body.access_token))
+    .then(() => {
+      return _.extend(spotifyApi, {
+        getPlaylistBySeeds: getPlaylistBySeeds
+      })
+    });
+
+};
