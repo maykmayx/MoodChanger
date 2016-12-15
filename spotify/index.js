@@ -17,7 +17,6 @@ let getRecommendationByTrack = (track, seedTrackId) => {
 
   // set target audio features
   AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track[attr]);
-
   let mapTrackIds = (response) => {
     let tracks = response.body.tracks;
     let trackIds = tracks.map(track => track.id);
@@ -34,6 +33,7 @@ let getRecommendationByTrack = (track, seedTrackId) => {
 };
 
 let getRecommendationsForTracks = (originTrack, destTrack) => {
+  console.log("calling getRecommendationByTrack");
   return Promise.all([
     getRecommendationByTrack(originTrack, destTrack.id),
     getRecommendationByTrack(destTrack, originTrack.id)
@@ -53,7 +53,6 @@ module.exports = function initialize(clientId, clientSecret) {
     clientId : clientId,
     clientSecret : clientSecret
   });
-
   return spotifyApi.clientCredentialsGrant()
     .then(response => spotifyApi.setAccessToken(response.body.access_token))
     .then(() => {

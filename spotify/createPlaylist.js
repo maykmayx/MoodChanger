@@ -10,18 +10,18 @@ function createPlaylist(originTrack, destTrack, recommendations) {
 	let tracksGraph = buildGraph(recommendations);
 	
 	// call astar with TODO
-	let playlist = jsnx.astar_path(graph, 'weight', weight);
+	//let playlist = jsnx.astar_path(graph, 'weight', weight);
 
     // debugging purposes
-	playlist.forEach(x => {
-		console.log(x.id, x.name, x.audio_features.valence);
-	});
+	// playlist.forEach(x => {
+	// 	console.log(x.id, x.name, x.audio_features.valence);
+	// });
   
 	return playlist;
 }
 
 function astar() {
-	
+
 }
 
 function buildGraph(tracks) {
