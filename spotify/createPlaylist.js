@@ -1,36 +1,45 @@
 'use strict';
-let ug = require('ug');
+let jsnx = require('jsnetworkx');
+let comb = require("combinations-generator")
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'acousticness', 'instrumentalness', 'valence'];
 
 function createPlaylist(originTrack, destTrack, recommendations) {
+	
+	// build a complete graph from tracks, s.t each edge ('trackA','trackB', {weight = d(a,b)})
+	let tracksGraph = buildGraph(recommendations);
+	
+	// call astar with TODO
+	let playlist = jsnx.astar_path(graph, 'weight', weight);
 
-	let playlist;
-	let tracksGraph;
-	// TODO create graph from recommendations
-	// TODO call a* with graph and playlist(empty), a* will add tracks from graph to playlist
-
-  // debugging purposes
-  // playlist.forEach(x => {
-  //   console.log(x.id, x.name, x.audio_features.valence);
-  // });
+    // debugging purposes
+	playlist.forEach(x => {
+		console.log(x.id, x.name, x.audio_features.valence);
+	});
   
 	return playlist;
 }
 
-function buildGraph(originTrack, destTrack, recommendations) {
-	let graph = new ug.Graph();
+function astar() {
 	
-	let startNode = graph.createNode(originTrack.id, originTrack.body);
-	let destTrack = graph.createNode(destTrack.id, originTrack.body);
+}
 
-	for (let i=0; i<recommendations.length; i++) {
-		let trackNode = graph.createNode(recommendations[i].id, recommendations[i].body)
+function buildGraph(tracks) {
+	var graph = jsnx.completeGraph(tracks.length);
+	
+	// create nodes
+	graph.add_nodes_from(tracks);
+
+	//create edges between nodes	
+	let edges = comb(tracks, 2);
+	graph.add_edges_from(edges)
+	
+	// update edges with weight
+	for (let edge of edges){
+		w = nodesDist(edges[i][0], edges[i][1])
+		jsnx.set_edge_attributes(graph, 'weight', weight);
 	}
-
-	// create edges between nodes
-
-
+	return graph;
 }
 
 function nodesDist(curTrack, destTrack) {
@@ -41,13 +50,6 @@ function nodesDist(curTrack, destTrack) {
 	}
 	return distSum;
 };
-
-// desired audio features:
-// 	"danceability" : 0.735,
-// 	"energy" : 0.578,
-// 	"acousticness" : 0.514,
-// 	"instrumentalness" : 0.0902,
-// 	"valence" : 0.624,
 
 
 module.exports = createPlaylist;
