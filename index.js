@@ -3,7 +3,6 @@
 let express = require('express');
 let serveStatic = require('serve-static');
 var argv = require('minimist')(process.argv.slice(2));
-<<<<<<< Updated upstream
 let spotify = require('./spotify');
 let config = require('./config');
 let app = express();

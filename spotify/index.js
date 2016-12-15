@@ -5,7 +5,8 @@ let createPlaylist = require('./createPlaylist');
 let Promise = require('bluebird');
 let _ = require('lodash');
 
-let AUDIO_FEATURES = ['acousticness','danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'tempo', 'valence']
+let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
+
 
 let spotifyApi = new SpotifyWebApi();
 
@@ -14,9 +15,9 @@ let getRecommendationByTrack = (track, seedTrackId) => {
     seed_tracks: [seedTrackId]
   };
 
+  // set target audio features
   AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track[attr]);
 
-  // https://developer.spotify.com/web-api/get-recommendations/
   let mapTrackIds = (response) => {
     let tracks = response.body.tracks;
     let trackIds = tracks.map(track => track.id);
