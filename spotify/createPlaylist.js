@@ -4,8 +4,8 @@ let jsnx = require('jsnetworkx');
 let combos = require('array-combos').default;
 let _ = require('lodash');
 let Astar = require('a-star-for-async-data');
-let FACTOR = 1;
 
+let FACTOR = 1;
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
 
 function createPlaylist(origin, dest) {
@@ -33,10 +33,13 @@ function createPlaylist(origin, dest) {
 function astar(tracksGraph, origin, dest) {
 
 	let playlist = new Astar({
+	    // function to look for a nodes exiting edges - take only the ones who are lower than factor
 	    exitArcsForNodeId: (nodeId) => {
 		    let exitEdges = tracksGraph.edges(nodeId, true);		    
 		    return exitEdges.filter((edge) => {return tracksGraph.edge.get(edge[0]).get(edge[1]).weight < FACTOR})  
 	    },
+	    
+	    // heuristic function: distance between node and the destination track
 	    h: (nodeId) => {
 	    	let curTrack = tracksGraph.node.get(nodeId);
 	    	return calculateWeight(curTrack, dest.track);
@@ -45,7 +48,7 @@ function astar(tracksGraph, origin, dest) {
 
   
 	return playlist.findPath(origin.track.id, dest.track.id)
-	    .then(function (path) {
+	    .then(path => path.path).then(x => { console.log(x); return x 
 	        // path is an object that looks like:
 	        // path = {
 	        //   cost: <fullCostOfPath>,
