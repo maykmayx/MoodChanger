@@ -3,32 +3,63 @@
 let jsnx = require('jsnetworkx');
 let combos = require('array-combos').default;
 let _ = require('lodash');
+let Astar = require('a-star-for-async-data');
+let FACTOR = 1;
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
 
 function createPlaylist(origin, dest) {
 	
+	// re organize tracks for the correct structure
 	let tracks = [origin.track, dest.track]
 		.concat(origin.recommendations)
 		.concat(dest.recommendations);
-
-	// build a complete graph from tracks, s.t each edge ('trackA','trackB', {weight = d(a,b)})
-	let tracksGraph = buildGraph(tracks);
 	
-	// call astar with TODO
-	//let playlist = jsnx.astar_path(graph, 'weight', weight);
+	// Build Graph
+	console.time('buildGraph');
+	let tracksGraph = buildGraph(tracks);
+	console.timeEnd('buildGraph');
 
-    // debugging purposes
-	// playlist.forEach(x => {
-	// 	console.log(x.id, x.name, x.audio_features.valence);
-	// });
+	// call A* algorithm to return the path
+	let path = astar(tracksGraph, origin, dest);
+	console.log(path);
+	// TODO turn path to playlist
+	//let playlist = path; // TODO manipulate this.
+	
+	//return playlist;
+}
+
+
+function astar(tracksGraph, origin, dest) {
+
+	let playlist = new Astar({
+	    exitArcsForNodeId: (nodeId) => {
+		    let exitEdges = tracksGraph.edges(nodeId, true);		    
+		    return exitEdges.filter((edge) => {return tracksGraph.edge.get(edge[0]).get(edge[1]).weight < FACTOR})  
+	    },
+	    h: (nodeId) => {
+	    	let curTrack = tracksGraph.node.get(nodeId);
+	    	return calculateWeight(curTrack, dest.track);
+	    }
+	});
+
   
-	return tracksGraph;
+	return playlist.findPath(origin.track.id, dest.track.id)
+	    .then(function (path) {
+	        // path is an object that looks like:
+	        // path = {
+	        //   cost: <fullCostOfPath>,
+	        //   path: <arrayOfEdges>
+	        // }
+	    }).catch(function (reason) {
+	        if (reason === "No path to goal") {
+	            // This is pedestrian...
+	        } else {
+	            // This is not...
+	        }
+	    });
 }
 
-function astar() {
-
-}
 
 function buildGraph(tracks) {
 	let graph = new jsnx.Graph();
@@ -40,13 +71,10 @@ function buildGraph(tracks) {
 	// create nodes
 	graph.addNodesFrom(nodes);
 
+	// struct weighted edges as [node1id, node2id, { weight: distance }]
 	let tracksDictionary = _.keyBy(tracks, 'id');
-
-	//create edges between nodes
 	let ids = _.keys(tracksDictionary);
 	let edges = combos(ids, 2);
-	
-	// update edges with weight
 	let weightedEdges = _.map(edges, edge => {
 		let edgeTracks = edge.map(id => tracksDictionary[id]);
 		let weight = calculateWeight(...edgeTracks);
@@ -56,11 +84,9 @@ function buildGraph(tracks) {
 			weight
 		];
 	});
-
-	graph.addWeightedEdgesFrom(weightedEdges)
-
-	console.log(graph)
-
+	
+	// add edges to graph
+	graph.addWeightedEdgesFrom(weightedEdges);
 	return graph;
 }
 
@@ -71,3 +97,8 @@ function calculateWeight(curTrack, destTrack) {
 };
 
 module.exports = createPlaylist;
+
+// Optimizing options:
+// 		optimize factor
+// 		normalize audio features
+// 		write custome lookup function for astar
