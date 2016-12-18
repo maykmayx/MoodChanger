@@ -11,7 +11,6 @@ spotify(argv.id, argv.secret).then(api => {
 
   app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {
     api.getPlaylistBySeeds(req.params.originTrack, req.params.destTrack)
-      .then(playlist => playlist.map(track => track.id))
       .then(res.json.bind(res)).catch(next);
   });
 
