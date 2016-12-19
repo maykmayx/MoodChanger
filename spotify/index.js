@@ -6,12 +6,14 @@ let Promise = require('bluebird');
 let _ = require('lodash');
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
+let DEFAULT_RECOMMENDATIONS_LIMIT = 50;
 
 let spotifyApi = new SpotifyWebApi();
 
-let getRecommendationByTrack = (track, seedTrackId) => {
+let getRecommendationByTrack = (track, seedTrackId, limit) => {
   let query = {
-    seed_tracks: [seedTrackId]
+    seed_tracks: [seedTrackId],
+    limit: Number(limit) || DEFAULT_RECOMMENDATIONS_LIMIT
   };
 
   // set target audio features
