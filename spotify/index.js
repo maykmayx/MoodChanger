@@ -6,7 +6,7 @@ let Promise = require('bluebird');
 let _ = require('lodash');
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
-let DEFAULT_RECOMMENDATIONS_LIMIT = 50;
+let DEFAULT_RECOMMENDATIONS_LIMIT = 100;
 
 let spotifyApi = new SpotifyWebApi();
 
