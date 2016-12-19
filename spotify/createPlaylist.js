@@ -4,6 +4,7 @@ let jsnx = require('jsnetworkx');
 let combos = require('array-combos').default;
 let _ = require('lodash');
 let Astar = require('a-star-for-async-data');
+let Promise = require('bluebird');
 
 let FACTOR = 1;
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
@@ -21,12 +22,10 @@ function createPlaylist(origin, dest) {
 	console.timeEnd('buildGraph');
 
 	// call A* algorithm to return the path
-	let path = astar(tracksGraph, origin, dest);
-	console.log(path);
-	// TODO turn path to playlist
-	//let playlist = path; // TODO manipulate this.
-	
-	//return playlist;
+	console.time('A*');
+	return Promise.method(astar)(tracksGraph, origin, dest)
+		.then(path => path.path)
+		.finally(() => console.timeEnd('A*'));
 }
 
 
@@ -35,32 +34,19 @@ function astar(tracksGraph, origin, dest) {
 	let playlist = new Astar({
 	    // function to look for a nodes exiting edges - take only the ones who are lower than factor
 	    exitArcsForNodeId: (nodeId) => {
-		    let exitEdges = tracksGraph.edges(nodeId, true);		    
+		    let exitEdges = tracksGraph.edges(nodeId, true);
 		    return exitEdges.filter((edge) => {return tracksGraph.edge.get(edge[0]).get(edge[1]).weight < FACTOR})  
 	    },
 	    
 	    // heuristic function: distance between node and the destination track
 	    h: (nodeId) => {
 	    	let curTrack = tracksGraph.node.get(nodeId);
-	    	return calculateWeight(curTrack, dest.track);
+	    	return calculateWeight({ audio_features: curTrack }, dest.track);
 	    }
 	});
-
   
-	return playlist.findPath(origin.track.id, dest.track.id)
-	    .then(path => path.path).then(x => { console.log(x); return x 
-	        // path is an object that looks like:
-	        // path = {
-	        //   cost: <fullCostOfPath>,
-	        //   path: <arrayOfEdges>
-	        // }
-	    }).catch(function (reason) {
-	        if (reason === "No path to goal") {
-	            // This is pedestrian...
-	        } else {
-	            // This is not...
-	        }
-	    });
+	return playlist.findPath(origin.track.id, dest.track.id);
+
 }
 
 
