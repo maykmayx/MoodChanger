@@ -21,31 +21,40 @@ function createPlaylist(origin, dest) {
 	let tracksGraph = buildGraph(tracks);
 	console.timeEnd('buildGraph');
 
-	// call A* algorithm to return the path
+	//call A* algorithm to return the path
 	console.time('A*');
-	return Promise.method(astar)(tracksGraph, origin, dest)
+	return Promise.method(astar)(tracksGraph, origin.track.id, dest.track.id)
 		.then(path => path.path)
 		.finally(() => console.timeEnd('A*'));
 }
 
 
-function astar(tracksGraph, origin, dest) {
+function astar(tracksGraph, originId, destId) {
 
 	let playlist = new Astar({
 	    // function to look for a nodes exiting edges - take only the ones who are lower than factor
 	    exitArcsForNodeId: (nodeId) => {
+		    
 		    let exitEdges = tracksGraph.edges(nodeId, true);
-		    return exitEdges.filter((edge) => {return tracksGraph.edge.get(edge[0]).get(edge[1]).weight < FACTOR})  
+		    let filtered = exitEdges.filter((edge) => { return edge[2] < FACTOR });
+		    return filtered.map(edge => {
+		    	return { 
+			    	to: edge[0],
+			    	from: edge[1],
+			    	cost: edge[2]
+		    	}
+		    })  
 	    },
 	    
 	    // heuristic function: distance between node and the destination track
 	    h: (nodeId) => {
 	    	let curTrack = tracksGraph.node.get(nodeId);
-	    	return calculateWeight({ audio_features: curTrack }, dest.track);
+	    	let destTrack = tracksGraph.node.get(destId)
+	    	return calculateWeight({ audio_features: curTrack }, { audio_features: destTrack });
 	    }
 	});
   
-	return playlist.findPath(origin.track.id, dest.track.id);
+	return playlist.findPath(originId, destId);
 
 }
 
@@ -86,6 +95,7 @@ function calculateWeight(curTrack, destTrack) {
 };
 
 module.exports = createPlaylist;
+
 
 // Optimizing options:
 // 		optimize factor
