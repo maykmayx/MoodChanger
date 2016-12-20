@@ -7,8 +7,7 @@ let getSuggestions = _.memoize(q => {
   return fetch('/api/autocomplete?q=' + q)
     .then(response => response.json())
     .then(results => {
-      let suggestions = _.sortBy(results, SORT_BY_PROPERTY).reverse();
-      return { q: q, suggestions: suggestions };
+      return { q: q, suggestions: results };
     });
 });
 
