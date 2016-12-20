@@ -10,18 +10,7 @@ let DEFAULT_RECOMMENDATIONS_LIMIT = 100;
 
 let spotifyApi = new SpotifyWebApi();
 
-let getRecommendationByTrack = (track, seedTrackId, limit) => {
-  let query = {
-    seed_tracks: [seedTrackId],
-    limit: Number(limit) || DEFAULT_RECOMMENDATIONS_LIMIT
-  };
-
-  // set target audio features
-  AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track[attr]);
-  return spotifyApi.getRecommendations(query).then(mapTrackIds);
-};
-
-let mapTrackIds = (response) => {
+let addAudioFeatures = (response) => {
   let tracks = response.body.tracks;
   let trackIds = tracks.map(track => track.id);
   return spotifyApi.getAudioFeaturesForTracks(trackIds)
@@ -33,36 +22,48 @@ let mapTrackIds = (response) => {
     });
 };
 
+let getRecommendationByTrack = (track, seedTrackId, limit) => {
+  let query = {
+    seed_tracks: [seedTrackId],
+    limit: Number(limit) || DEFAULT_RECOMMENDATIONS_LIMIT
+  };
+
+  // set target audio features
+  AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track.audio_features[attr]);
+  return spotifyApi.getRecommendations(query).then(addAudioFeatures);
+};
+
 let getRecommendationsForTracks = (originTrack, destTrack) => {
+  console.time('getRecommendationsForTracks');
   return Promise.all([
     getRecommendationByTrack(originTrack, destTrack.id),
     getRecommendationByTrack(destTrack, originTrack.id)
-  ]);
+  ]).then(recommendations => {
+    console.timeEnd('getRecommendationsForTracks');
+    return {
+      origin: {
+        track: originTrack,
+        recommendations: recommendations[0]
+      },
+      dest: {
+        track: destTrack,
+        recommendations: recommendations[1]
+      }
+    }
+  });
 };
 
 let getPlaylistBySeeds = (originId, destId) => {
-  console.time('getTracks')
-  return spotifyApi.getTracks([originId, destId]).then(mapTrackIds)
-    .then(tracks => {
-      let originTrack = tracks[0];
-      let destTrack = tracks[1];
-      console.timeEnd('getTracks');
-      console.time('getRecommendationsForTracks');
-      return getRecommendationsForTracks(originTrack.audio_features, destTrack.audio_features).then(recommendations => {
-        console.timeEnd('getRecommendationsForTracks');
-        return {
-          origin: {
-            track: originTrack,
-            recommendations: recommendations[0]
-          },
-          dest: {
-            track: destTrack,
-            recommendations: recommendations[1]
-          }
-        }
-      });
-    })
+  return spotifyApi.getTracks([originId, destId])
+    .then(addAudioFeatures)
+    .then(tracks => getRecommendationsForTracks(...tracks))
     .then(result => createPlaylist(result.origin, result.dest));
+};
+
+let autocomplete = (query, limit) => {
+  if (!query) return Promise.resolve([]);
+  return spotifyApi.searchTracks(query, { limit: Number(limit) || 20 })
+    .then(response => response.body.tracks.items);
 };
 
 module.exports = function initialize(clientId, clientSecret) {
@@ -75,7 +76,8 @@ module.exports = function initialize(clientId, clientSecret) {
     .then(response => spotifyApi.setAccessToken(response.body.access_token))
     .then(() => {
       return _.extend(spotifyApi, {
-        getPlaylistBySeeds: getPlaylistBySeeds
+        getPlaylistBySeeds: getPlaylistBySeeds,
+        autocomplete: autocomplete
       })
     });
 

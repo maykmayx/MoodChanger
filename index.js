@@ -14,6 +14,11 @@ spotify(argv.id, argv.secret).then(api => {
       .then(res.json.bind(res)).catch(next);
   });
 
+  app.get('/api/autocomplete', (req, res, next) => {
+    let q = String(req.query.q).trim();
+    api.autocomplete(q).then(res.json.bind(res)).catch(next);
+  });
+
   // error handling
   let isProduction = app.get('env') === 'production';
   app.use((err, req, res, next) => {
