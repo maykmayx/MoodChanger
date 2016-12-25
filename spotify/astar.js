@@ -6,6 +6,75 @@ let _ = require('lodash');
 let Astar = require('a-star-for-async-data');
 let Promise = require('bluebird');
 
+var MAX_VALENCE_DIST = 0;
+
+function astar(startNodeId, endNodeId, tracksGraph) {
+
+		var cameFrom = {};
+		var fCosts = {};
+		var gCosts = {};
+		var open = {};
+		var closed = {};
+		var iteration = 1;
+
+		MAX_VALENCE_DIST = alth(startNodeId, endNodeId, tracksGraph);
+
+		open[startNodeId] = startNodeId;
+		cameFrom[startNodeId] = false;
+		gCosts[startNodeId] = 0;
+		fCosts[startNodeId] = MAX_VALENCE_DIST;
+
+		while (true)
+		{
+			var bestId = null;
+
+			// Select the best candidate from the open nodes.
+			for (var nodeId in open)
+			{
+				if (bestId === null || fCosts[nodeId] < fCosts[bestId]) {
+					bestId = nodeId;
+				}
+			}
+
+			if (bestId === null) {
+				throw "No path to goal";
+			}
+
+			if (endNodeId == bestId) {
+				// We have a solution!
+				break;
+			}
+
+			let edges = tracksGraph.edges(bestId, true);
+			for (let edge of edges) {
+				// TODO: Simplify this to provide a single data structure.
+				var toNodeId = edge[1];
+				var cost = edge[2];
+
+				if (!closed[toNodeId]) {
+					var bestGCost = gCosts[bestId];
+					var newGCost = bestGCost + cost;
+
+					var gCostExists = gCosts.hasOwnProperty(toNodeId);
+					if (!gCostExists || gCosts[toNodeId] > newGCost) {
+						gCosts[toNodeId] = newGCost;
+						fCosts[toNodeId] = alth(toNodeId, endNodeId, tracksGraph);
+						cameFrom[toNodeId] = bestId;
+					}
+
+					open[toNodeId] = toNodeId;
+				}
+			};
+
+			closed[bestId] = true;
+			delete open[bestId];
+
+			iteration++;
+		}
+
+		return recPath(cameFrom, bestId);
+
+	}
 
 // function astar(start, end, tracksGraph){
  
@@ -83,7 +152,10 @@ function alth(nodeId, destId, tracksGraph) {
 	let curTrack = tracksGraph.node.get(nodeId);
 	let destTrack = tracksGraph.node.get(destId);
 
-	let dist = curTrack.valence - destTrack.valence;
+	let dist = Math.abs(curTrack.valence - destTrack.valence);
+	if (dist > MAX_VALENCE_DIST) {
+		dist = 10;
+	}
 	return dist;
 }
 
@@ -115,66 +187,66 @@ function alth(nodeId, destId, tracksGraph) {
 
 // }
 
-function astar(start, end, tracksGraph){
-	let cameFrom = {};
-	let fCosts = {};
-	let gCosts = {};
-	let open = {};
-	let closed = {};
-	let iteration = 1;
+// function astar(start, end, tracksGraph){
+// 	let cameFrom = {};
+// 	let fCosts = {};
+// 	let gCosts = {};
+// 	let open = {};
+// 	let closed = {};
+// 	let iteration = 1;
 
-	open[start] = start;
-	cameFrom[start] = false;
-	gCosts[start] = 0;
-	fCosts[start] = alth(start, end, tracksGraph);
+// 	open[start] = start;
+// 	cameFrom[start] = false;
+// 	gCosts[start] = 0;
+// 	fCosts[start] = alth(start, end, tracksGraph);
 
-	while (!(_.isEmpty(open))) {
-		let current = null;
-		for (let node in open) {
-			//if ((node !== undefined) && (current === null || fCosts[node] < fCosts[current])) {
-			if ((node !== undefined) && (current === null || gCosts[node] < gCosts[current])) {
-				current = node;
-			}
-		}
+// 	while (!(_.isEmpty(open))) {
+// 		let current = null;
+// 		for (let node in open) {
+// 			//if ((node !== undefined) && (current === null || fCosts[node] < fCosts[current])) {
+// 			if ((node !== undefined) && (current === null || gCosts[node] < gCosts[current])) {
+// 				current = node;
+// 			}
+// 		}
 		
-		if (current === null) {
-			throw "no path to goal"
-		}
+// 		if (current === null) {
+// 			throw "no path to goal"
+// 		}
 		
-		if (current === end) {
-			return recPath(cameFrom, current);
-		}	
+// 		if (current === end) {
+// 			return recPath(cameFrom, current);
+// 		}	
 
 
-		delete open[current];
-		closed[current] = true;
+// 		delete open[current];
+// 		closed[current] = true;
 
-		let edges = tracksGraph.edges(current, true);
-		for (let edge of edges) {
+// 		let edges = tracksGraph.edges(current, true);
+// 		for (let edge of edges) {
 
-			let neighbor = edge[1];
-			let cost = edge[2];
+// 			let neighbor = edge[1];
+// 			let cost = edge[2];
 
-			if (!!closed[neighbor]) {
-				continue;
-			}
+// 			if (!!closed[neighbor]) {
+// 				continue;
+// 			}
 
-			let newGcost = cost;  // HERE only look at the next step
-			open[neighbor] = neighbor;
+// 			let newGcost = cost;  // HERE only look at the next step
+// 			open[neighbor] = neighbor;
 			
-			// let gCostExists = gCosts.hasOwnProperty(neighbor);
-			// if (gCostExists && newGcost >= gCosts[neighbor]) {
-			// 	continue;
-			// }
+// 			// let gCostExists = gCosts.hasOwnProperty(neighbor);
+// 			// if (gCostExists && newGcost >= gCosts[neighbor]) {
+// 			// 	continue;
+// 			// }
 
-			cameFrom[neighbor] = current;
-			gCosts[neighbor] = newGcost;
-			fCosts[neighbor] = alth(neighbor, end, tracksGraph);
-		}
-		iteration++
-	}
-	return "no path";
-}
+// 			cameFrom[neighbor] = current;
+// 			gCosts[neighbor] = newGcost;
+// 			fCosts[neighbor] = alth(neighbor, end, tracksGraph);
+// 		}
+// 		iteration++
+// 	}
+// 	return "no path";
+// }
 
 
 module.exports = astar;
