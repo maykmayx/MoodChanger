@@ -20,6 +20,7 @@
     "a-star-for-async-data": "^1.0.1",
     "array-combos": "^1.0.0",
     "bluebird": "^3.4.6",
+    "euclidean-distance": "^1.0.0",
     "express": "^4.14.0",
     "jsnetworkx": "^0.3.4",
     "lodash": "^4.17.2",
