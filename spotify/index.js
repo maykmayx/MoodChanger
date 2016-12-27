@@ -13,8 +13,7 @@ let MAX_LIVENESS = 0.8;
 
 let spotifyApi = new SpotifyWebApi();
 
-let addAudioFeatures = (response) => {
-  let tracks = response.body.tracks;
+let addAudioFeatures = (tracks) => {
   let trackIds = tracks.map(track => track.id);
   return spotifyApi.getAudioFeaturesForTracks(trackIds)
     .then(response => _.keyBy(response.body.audio_features, 'id'))
@@ -36,7 +35,9 @@ let getRecommendationByTrack = (track, seedTrackId, limit) => {
   // TODO add minimum popularity > 50 and liveness < 0.8
   query['min_popularity'] = MIN_POPULARITY;
   query['max_liveness'] = MAX_LIVENESS;
-  return spotifyApi.getRecommendations(query).then(addAudioFeatures);
+  return spotifyApi.getRecommendations(query)
+    .then(response => response.body.tracks)
+    .then(addAudioFeatures);
 };
 
 let getRecommendationsForTracks = (originTrack, destTrack) => {
@@ -61,7 +62,7 @@ let getRecommendationsForTracks = (originTrack, destTrack) => {
 
 let getPlaylistBySeeds = (originId, destId) => {
   return spotifyApi.getTracks([originId, destId])
-    .then(addAudioFeatures)
+    .then(response => response.body.tracks).then(addAudioFeatures)
     .then(tracks => getRecommendationsForTracks(...tracks))
     .then(result => createPlaylist(result.origin, result.dest));
 };
@@ -72,33 +73,47 @@ let autocomplete = (query, limit) => {
     .then(response => response.body.tracks.items);
 };
 
+let expandPlaylist = (userId, playlistId, limit) => {
+  return spotifyApi.getPlaylistTracks(userId, playlistId)
+    .then(response => response.body.items.map(item => item.track)).then(addAudioFeatures)
+    .then(tracks => {
+      let mapRecommendations = track => {
+        // console.log(track)
+        let query = {
+          seed_tracks: [track.id],
+          limit: Number(limit) || DEFAULT_RECOMMENDATIONS_LIMIT
+        };
+
+        return spotifyApi.getRecommendations(query)
+          .then(response => response.body.tracks)
+          .then(addAudioFeatures)
+          .then(recommendations => {
+            return {
+              track: track,
+              recommendations: recommendations
+            };
+          });
+      };
+
+      return Promise.map(tracks, mapRecommendations)
+    });
+};
+
 module.exports = function initialize(clientId, clientSecret) {
 
   spotifyApi.setCredentials({
     clientId : clientId,
     clientSecret : clientSecret
   });
+
   return spotifyApi.clientCredentialsGrant()
     .then(response => spotifyApi.setAccessToken(response.body.access_token))
     .then(() => {
       return _.extend(spotifyApi, {
         getPlaylistBySeeds: getPlaylistBySeeds,
-        autocomplete: autocomplete
+        autocomplete: autocomplete,
+        expandPlaylist: expandPlaylist
       })
     });
 
 };
-
-// let top1000graph = () => {
-  
-//   let top1000tracks = spotifyApi.getPlaylistTracks('1269437965', '2iBH9S3UXlrtUBxjffgZEh');
-  
-//   let recommendations = Promise.all([
-//     top1000tracks.forEach(track => return {
-//       track: track.id,
-//       recommendations: spotifyApi.getRecommendations({seed_track:track.id});
-//     })]
-//   );
-
-
-
