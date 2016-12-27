@@ -7,6 +7,9 @@ let _ = require('lodash');
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
 let DEFAULT_RECOMMENDATIONS_LIMIT = 100;
+let MIN_POPULARITY = 70;
+let MAX_LIVENESS = 0.8;
+
 
 let spotifyApi = new SpotifyWebApi();
 
@@ -30,6 +33,9 @@ let getRecommendationByTrack = (track, seedTrackId, limit) => {
 
   // set target audio features
   AUDIO_FEATURES.forEach(attr => query['target_' + attr] = track.audio_features[attr]);
+  // TODO add minimum popularity > 50 and liveness < 0.8
+  query['min_popularity'] = MIN_POPULARITY;
+  query['max_liveness'] = MAX_LIVENESS;
   return spotifyApi.getRecommendations(query).then(addAudioFeatures);
 };
 
@@ -82,3 +88,6 @@ module.exports = function initialize(clientId, clientSecret) {
     });
 
 };
+
+
+

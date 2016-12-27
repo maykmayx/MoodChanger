@@ -22,16 +22,15 @@ function createPlaylist(origin, dest) {
 	let tracks = [origin.track, dest.track]
 		.concat(origin.recommendations)
 		.concat(dest.recommendations);
-	
 	// get the difference in the valnce audio feature. update global vars
 	analyzeValence(origin.track, dest.track);
 
 	let nodes = tracks.map(track => {
 		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
 	});
-
+	console.log(nodes);
 	let weight = calculateWeight(nodes[0][1], nodes[1][1]);
-	console.log(weight)
+	console.log("s->e w: " +weight)
 	
 	
 
