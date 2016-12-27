@@ -16,11 +16,7 @@ let retryIfNeeded = (result) => {
   return shouldRetry ? getSuggestions(result.q + '*') : result;
 };
 
-let isResultRelevant = (result, q) => {
-  return result.q === q || result.q === q + '*';
-};
-
-Array.from(document.querySelectorAll('input.autocomplete')).forEach(input => {
+document.querySelectorAll('input.autocomplete').forEach(input => {
   let awesomeplete = new Awesomplete(input, {
     maxItems: 20,
     replace: function(item) {
@@ -37,19 +33,14 @@ Array.from(document.querySelectorAll('input.autocomplete')).forEach(input => {
     }
   });
 
-  let showSuggestions = _.debounce(e => {
-    let q = e.target.value.trim();
-    getSuggestions(q)
-      .then(retryIfNeeded)
-      .then(result => {
-        if (isResultRelevant(result, e.target.value.trim())) {
-          awesomeplete.list = result.suggestions;
-          awesomeplete.evaluate();
-        }
-      });
-  }, 150);
-
-  input.addEventListener('input', showSuggestions);
+  let getData = (q) => getSuggestions(q).then(retryIfNeeded).then(result => result.suggestions);
+  
+  awesomeplete.async(getData, {
+    debounce: 150,
+    isRevelant: (current, original) => {
+      return current === original || current === original + '*'; 
+    }
+  });
 
   input.addEventListener('awesomplete-selectcomplete', e => {
     let selectedTrack = TRACKS_CACHE[e.text.value];
