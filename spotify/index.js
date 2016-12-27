@@ -7,7 +7,7 @@ let _ = require('lodash');
 
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
 let DEFAULT_RECOMMENDATIONS_LIMIT = 100;
-let MIN_POPULARITY = 70;
+let MIN_POPULARITY = 60;
 let MAX_LIVENESS = 0.8;
 
 
@@ -88,6 +88,17 @@ module.exports = function initialize(clientId, clientSecret) {
     });
 
 };
+
+// let top1000graph = () => {
+  
+//   let top1000tracks = spotifyApi.getPlaylistTracks('1269437965', '2iBH9S3UXlrtUBxjffgZEh');
+  
+//   let recommendations = Promise.all([
+//     top1000tracks.forEach(track => return {
+//       track: track.id,
+//       recommendations: spotifyApi.getRecommendations({seed_track:track.id});
+//     })]
+//   );
 
 
 
