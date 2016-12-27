@@ -5,11 +5,16 @@ let combos = require('array-combos').default;
 let _ = require('lodash');
 let Astar = require('a-star-for-async-data');
 let Promise = require('bluebird');
+let distance = require('euclidean-distance')
+let COUNTER = 0;
+let K = 5;
 
 var MAX_VALENCE_DIST = 0;
 
+//ORIGINAL ASTAR
 function astar(startNodeId, endNodeId, tracksGraph) {
-
+		let counter = 0;
+		let k=7;
 		var cameFrom = {};
 		var fCosts = {};
 		var gCosts = {};
@@ -23,6 +28,7 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 		cameFrom[startNodeId] = false;
 		gCosts[startNodeId] = 0;
 		fCosts[startNodeId] = MAX_VALENCE_DIST;
+		final = []
 
 		while (true)
 		{
@@ -31,23 +37,32 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 			// Select the best candidate from the open nodes.
 			for (var nodeId in open)
 			{
-				if (bestId === null || fCosts[nodeId] < fCosts[bestId]) {
+				if (bestId === null || fCosts[nodeId] < fCosts[bestId] || bestId === undefined) {
 					bestId = nodeId;
 				}
 			}
 
 			if (bestId === null) {
-				throw "No path to goal";
-			}
+				console.log('hi')
+				fCosts[bestId] += 100;
+				bestId = cameFrom[bestId];
 
+				//throw "No path to goal";
+			}
+			console.log("checking node " + bestId);
+			final.push(bestId);
+			counter++;
 			if (endNodeId == bestId) {
-				// We have a solution!
+				console.log("counter: "+counter)
+				console.log("final: " +final)
 				break;
+			
+				// We have a solution!
 			}
 
 			let edges = tracksGraph.edges(bestId, true);
+			console.log(edges.length);
 			for (let edge of edges) {
-				// TODO: Simplify this to provide a single data structure.
 				var toNodeId = edge[1];
 				var cost = edge[2];
 
@@ -57,9 +72,10 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 
 					var gCostExists = gCosts.hasOwnProperty(toNodeId);
 					if (!gCostExists || gCosts[toNodeId] > newGCost) {
-						gCosts[toNodeId] = newGCost;
-						fCosts[toNodeId] = alth(toNodeId, endNodeId, tracksGraph);
-						cameFrom[toNodeId] = bestId;
+							gCosts[toNodeId] = newGCost;
+							fCosts[toNodeId] = h(toNodeId, endNodeId, tracksGraph);
+							cameFrom[toNodeId] = bestId;
+						
 					}
 
 					open[toNodeId] = toNodeId;
@@ -130,7 +146,7 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 // 			}
 // 			cameFrom[neighbor] = current;
 // 			gCosts[neighbor] = newGcost;
-// 			fCosts[neighbor] = alth(neighbor, end, tracksGraph);
+// 			fCosts[neighbor] = h(neighbor, end, tracksGraph);
 // 		}
 // 		iteration++
 // 	}
@@ -144,7 +160,7 @@ function recPath(cameFrom, current) {
 		current = cameFrom[current];
 		path.push(current);
 	}
-	return path;
+	return path.reverse();
 }
 
 function alth(nodeId, destId, tracksGraph) {
@@ -159,6 +175,19 @@ function alth(nodeId, destId, tracksGraph) {
 	return dist;
 }
 
+function h(nodeId, destId, tracksGraph) {
+	let curTrack = tracksGraph.node.get(nodeId);
+	let destTrack = tracksGraph.node.get(destId);
+
+	let v1 = _.values(curTrack);
+	let v2 = _.values(destTrack);
+
+	let dist = distance(v1, v2);
+		if (dist > 1) {
+		dist = 10;
+	}
+	return dist;
+}
 // function astar(tracksGraph, originId, destId) {
 
 // 	let playlist = new Astar({

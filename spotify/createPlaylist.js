@@ -14,8 +14,8 @@ let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalnes
 // Globals
 var GROWTH = true;
 var VALENCE_DIFF;
-var FACTOR = 0.3;
-
+var FACTOR = 0.13;
+var K = 10;
 function createPlaylist(origin, dest) {
 	
 	// re organize tracks for the correct structure
@@ -32,8 +32,14 @@ function createPlaylist(origin, dest) {
 
 	let weight = calculateWeight(nodes[0][1], nodes[1][1]);
 	console.log(weight)
+	
+	
 
-	// Build Graph
+	//var afRanges = getAudioFeatureRanges(origin.track, dest.track);
+	// afRanges = expandAFranges(afRanges);
+	// console.log(afRanges);
+
+	//Build Graph
 	console.time('buildGraph');	
 	let tracksGraph = buildWeightedGraph(tracks);
 	console.timeEnd('buildGraph');
@@ -47,7 +53,7 @@ function createPlaylist(origin, dest) {
 	console.timeEnd('A*');
 	
 	console.log(path)
-	// for (let id of path) {
+	// // for (let id of path) {
 	// 	console.log(tracksGraph.node.get(id))
 	// }
 
@@ -97,7 +103,7 @@ function calculateWeight(track1, track2) {
 	// option 1: calculate vector distance (norm) distance([audio_features],[audio_features])
 	let v1 = _.values(track1);
 	let v2 = _.values(track2);
-	return distance(v1, v2)
+	return Math.pow(distance(v1, v2),2);
 
 	// option 2: abs dist between valence audio features
 	// return Math.abs(curTrack.audio_features['valence']-destTrack.audio_features['valence']);
@@ -139,4 +145,23 @@ function calculateWeight(track1, track2) {
 // }
 
 module.exports = createPlaylist;
+
+function getAudioFeatureRanges(originTrack, destTrack){
+  var afRanges = {};
+  AUDIO_FEATURES.forEach(af =>afRanges[af] = [originTrack.audio_features[af], destTrack.audio_features[af]]);
+  return afRanges;
+}
+
+function expandAFranges(afRanges){
+	for (var af in afRanges) {
+		var diff = afRanges[af][1] - afRanges[af][0];
+		var segment = diff / K;
+		var temp = afRanges[af][1];
+		afRanges[af].pop();
+		for (var i=1;i<K-1; i++) {
+			afRanges[af].push(afRanges[af][i-1]+segment);
+		}
+		afRanges[af].push(temp);
+	}
+}
 
