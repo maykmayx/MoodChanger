@@ -9,6 +9,7 @@ var jsonfile = require('jsonfile')
 let Fuse = require('fuse.js');
 let Promise = require('bluebird');
 let _ = require('lodash');
+
 let app = express();
 let buildStaticGraph = require('./spotify/createPlaylist.js');
 let astar = require('./spotify/astar.js');
@@ -34,25 +35,23 @@ spotify(argv.id, argv.secret).then(api => {
 
   // preload a playlist into memory
   // results are an array of { seed_tracks: [ TRACK IDS ], recommendations: [ TRACKS ] }
-  expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 10000).then(results => {
+  expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 2000).then(results => {
 
     // flatten tracks
     let tracks = _.flatten(results.map(result => result.recommendations));
+    let logLabel = 'Build graph from ' + tracks.length + ' tracks';
+    
+    // pre-build graph from results
+    console.time(logLabel);
     let graph = buildStaticGraph(results);
+    console.timeEnd(logLabel);
+    
     let createPlaylist = (origin, dest) => {
-      let path = astar(origin.track.id, dest.track.id, graph);
-      playlist.push(path);
+      console.time('Creating playlist');
+      let playlist = astar(origin, dest, graph);
+      console.timeEnd('Creating playlist');
       return playlist;
-    }
-    /* tmp - create random playlist */
-    // let createPlaylist = (origin, dest) => {
-    //   let randomIds = _.sampleSize(tracks, 20).map(track => track.id);
-    //   let playlist = [];
-
-    //   playlist.push(origin, ...randomIds, dest);
-
-    //   return playlist;
-    // };
+    };
 
     // lookup path by origin and destination tracks
     app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {

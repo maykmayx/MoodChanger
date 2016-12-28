@@ -13,18 +13,20 @@ let MAX_LIVENESS = 0.8;
 
 let spotifyApi = new SpotifyWebApi();
 
-let addAudioFeatures = (tracks) => {
-
-  let trackIds = tracks.map(track => track.id);
-  return spotifyApi.getAudioFeaturesForTracks(trackIds)
-    .then(response => _.keyBy(response.body.audio_features, 'id'))
-    .then(audioFeatures => {
-      // add audio features to tracks
-      tracks.forEach(track => {
-        track.audio_features = audioFeatures[track.id];
+let addAudioFeatures = (allTracks) => {
+  let chunks = _.chunk(allTracks, DEFAULT_RECOMMENDATIONS_LIMIT);
+  return Promise.mapSeries(chunks, tracks => {
+    let trackIds = tracks.map(track => track.id);
+    return spotifyApi.getAudioFeaturesForTracks(trackIds)
+      .then(response => _.keyBy(response.body.audio_features, 'id'))
+      .then(audioFeatures => {
+        // add audio features to tracks
+        tracks.forEach(track => {
+          track.audio_features = audioFeatures[track.id];
+        });
+        return tracks;
       });
-      return tracks;
-    });
+  }).then(_.flatten);
 };
 
 let getRecommendationByTrack = (track, seedTrackId, limit) => {
@@ -82,8 +84,8 @@ let getPlaylistTracks = (userId, playlistId, offset) => {
   return spotifyApi.getPlaylistTracks(userId, playlistId, { offset: offset })
     .then(response => {
       let tracks = response.body.items.map(item => item.track);
-      log('Fetching playlist:', (response.body.total - tracks.length / response.body.total * 100).toFixed(1) + '%');
-      if (!response.body.next) return addAudioFeatures(tracks);
+      log('Fetching playlist:', ((offset + tracks.length) / response.body.total * 100).toFixed(1) + '%');
+      if (!response.body.next) return tracks;
       return getPlaylistTracks(userId, playlistId, offset + response.body.limit)
         .then(moreTracks => tracks.concat(moreTracks));
     });
@@ -92,6 +94,7 @@ let getPlaylistTracks = (userId, playlistId, offset) => {
 let expandPlaylist = (userId, playlistId, limit) => {
   console.time('expanding top 100 playlist');
   return getPlaylistTracks(userId, playlistId)
+    .then(addAudioFeatures)
     .then(tracks => {
       console.log();
 
