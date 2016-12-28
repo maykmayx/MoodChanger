@@ -36,7 +36,7 @@ spotify(argv.id, argv.secret).then(api => {
     // lookup path by origin and destination tracks
     app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {
       // api.createPlaylist(req.params.originTrack, req.params.destTrack)
-      let playlist = createPlaylist(originTrack, destTrack);
+      let playlist = createPlaylist(req.params.originTrack, req.params.destTrack);
       Promise.resolve(playlist).then(res.json.bind(res)).catch(next);
     });
 

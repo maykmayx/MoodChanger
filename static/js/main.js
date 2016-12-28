@@ -16,6 +16,25 @@ let retryIfNeeded = (result) => {
   return shouldRetry ? getSuggestions(result.q + '*') : result;
 };
 
+let selectedTracks = {
+  origin: null,
+  dest: null
+};
+
+let createPlaylist = (origin, dest) => {
+  return fetch('/api/playlist/' + origin + '/' + dest)
+    .then(response => response.json()); 
+};
+
+let selectTrack = (id, trackId) => {
+  selectedTracks[id] = TRACKS_CACHE[trackId];
+  if (selectedTracks.origin && selectedTracks.dest) {
+    createPlaylist(selectedTracks.origin.id, selectedTracks.dest.id).then(playlist => {
+      console.log(playlist);
+    });
+  }
+};
+
 document.querySelectorAll('input.autocomplete').forEach(input => {
   let awesomeplete = new Awesomplete(input, {
     maxItems: 20,
@@ -43,8 +62,8 @@ document.querySelectorAll('input.autocomplete').forEach(input => {
   });
 
   input.addEventListener('awesomplete-selectcomplete', e => {
-    let selectedTrack = TRACKS_CACHE[e.text.value];
-    console.log(selectedTrack);
+    selectTrack(input.id, e.text.value);
   });
+
 
 });
