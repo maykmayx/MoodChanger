@@ -12,90 +12,145 @@ let distance = require('euclidean-distance')
 let AUDIO_FEATURES = ['danceability', 'energy', 'acousticness', 'instrumentalness', 'valence'];
 
 // Globals
-var GROWTH = true;
-var VALENCE_DIFF;
 var FACTOR = 0.13;
 var K = 10;
+
 function createPlaylist(origin, dest) {
 	
-	// re organize tracks for the correct structure
-	let tracks = [origin.track, dest.track]
-		.concat(origin.recommendations)
-		.concat(dest.recommendations);
-	// get the difference in the valnce audio feature. update global vars
-	analyzeValence(origin.track, dest.track);
-
-	let nodes = tracks.map(track => {
-		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
-	});
-	console.log(nodes);
-	let weight = calculateWeight(nodes[0][1], nodes[1][1]);
-	console.log("s->e w: " +weight)
+	// bring tracksGraph from cache
 	
-	
-
-	//var afRanges = getAudioFeatureRanges(origin.track, dest.track);
-	// afRanges = expandAFranges(afRanges);
-	// console.log(afRanges);
-
-	//Build Graph
-	console.time('buildGraph');	
-	let tracksGraph = buildWeightedGraph(tracks);
-	console.timeEnd('buildGraph');
-	
-	console.log("nodes: " + tracksGraph.nodes().length)
-	console.log("edges: " + tracksGraph.edges().length)
-
-	//call A* algorithm to return the path
-	console.time('A*');
-	let path = astar(origin.track.id, dest.track.id, tracksGraph);
-	console.timeEnd('A*');
-	
-	console.log(path)
-	// // for (let id of path) {
-	// 	console.log(tracksGraph.node.get(id))
-	// }
-
-	// TODO if no path -> enlarge factor and run again	
-	// return path;
+	return path = astar(origin, dest, tracksGraph);
 }
 
-function analyzeValence(start, end) {
-	VALENCE_DIFF = end.audio_features['valence']-start.audio_features['valence']
-	if (VALENCE_DIFF < 0) {
-		GROWTH = false;
-	}
-}
-
-function buildWeightedGraph(tracks) {
+  // tracks are an array of { seed_tracks: [ TRACKS ], recommendations: [ TRACKS ] }
+function build1000graph(tracks){
+	console.log("in")
 	let graph = new jsnx.Graph();
+	let seeds = _.flatten(tracks.map(track=>track.seed_tracks));
+	let nodes = seeds.map(track=> [track.id, _.pick(track.audio_features, AUDIO_FEATURES)])
+	// let nodes = _.flatten(tracks.map(track=>tracks.seed_tracks)).map(track=> {
+	// 	return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
+	// });
+	console.log(nodes)
 
-	let nodes = tracks.map(track => {
-		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
-	});
-
-	// create nodes
+	// // let nodes = tracks.map(track => {
+	// // 	return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
+	// // });
+	
 	graph.addNodesFrom(nodes);
-
-	//let tracksDictionary = _.keyBy(tracks, 'id');
-	//let ids = _.keys(tracksDictionary);
-
+	
 	let ids = nodes.map(node=>node[0]);
-	let weightedEdges = [];
-
-	for (let i=0; i < ids.length; i++) {
-		let nodeId = ids[i];
-		for (let j=i+1; j < ids.length-i; j++) {
-			let neighborId = ids[j];
-			let weight = calculateWeight(nodes[i][1], nodes[j][1]);
-			if (weight < FACTOR) {
-				weightedEdges.push([nodeId, neighborId, weight]);
+	
+	for (let chunk in tracks) {
+		for (let recommendation in chunk.recommendations){
+			let isNode = ids.hasOwnProperty(recommendation.id);
+			if (isNode) {
+				let nextNode = recommendation.map(track=>{return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]})
+				for (let seedTrack in chunk.seed_tracks) {
+					graph.addEdge(seedTrack, nextNode);
+				}
 			}
 		}
 	}
-	graph.addWeightedEdgesFrom(weightedEdges);
 	return graph;
 }
+
+/** createPlaylist for dynamic version **/
+
+// function createPlaylist(origin, dest) {
+
+// 	// re organize tracks for the correct structure
+// 	let tracks = [origin.track, dest.track]
+// 		.concat(origin.recommendations)
+// 		.concat(dest.recommendations);
+// 	console.log(tracks);
+// 	let nodes = tracks.map(track => {
+// 		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
+// 	});
+// 	let weight = calculateWeight(nodes[0][1], nodes[1][1]);
+// 	console.log("s->e w: " +weight)
+// 	// var afRanges = getAudioFeatureRanges(origin.track, dest.track);
+// 	// afRanges = expandAFranges(afRanges);
+// 	// //console.log(afRanges);
+// 	// //let sliced = afRanges.forEach(af=>afRanges[af].slice(0,1));
+// 	// let sliced = sliceAFranges(afRanges, 0);
+// 	// console.log(sliced);
+// 	let tracksGraph = build1000graph(origin, dest);
+
+// 	// //Build Graph
+// 	// console.time('buildGraph');	
+// 	// let tracksGraph = buildWeightedGraph(tracks);
+// 	// console.timeEnd('buildGraph');
+	
+// 	// console.log("nodes: " + tracksGraph.nodes().length)
+// 	// console.log("edges: " + tracksGraph.edges().length)
+
+// 	// //call A* algorithm to return the path
+// 	// console.time('A*');
+// 	// let path = astar(origin.track.id, dest.track.id, tracksGraph);
+// 	// console.timeEnd('A*');
+	
+// 	// console.log(path)
+// 	// // for (let id of path) {
+// 	// 	console.log(tracksGraph.node.get(id))
+// 	// }
+
+// 	// TODO if no path -> enlarge factor and run again	
+// 	// return path;
+// }
+
+// function analyzeValence(start, end) {
+// 	VALENCE_DIFF = end.audio_features['valence']-start.audio_features['valence']
+// 	if (VALENCE_DIFF < 0) {
+// 		GROWTH = false;
+// 	}
+// }
+
+// 	for (var node in nodes) {
+// 		// get node recommendations
+// 		// go through a node's recs, if one of them is already in the graph add an edge
+// 		let recommendations = tracks[node[0]];
+// 		for (var recommendation in recommendations) {
+// 			var isNode = nodes.hasOwnProperty(recommendation.id);
+// 			if (isNode) {
+// 				let weight = calculateWeight(nodes[node][1], nodes[j][1]);
+// 				if (weight < FACTOR) {
+// 					weightedEdges.push([nodeId, neighborId, weight]);
+// 				}
+// 		}
+// 	}
+// 	return graph;
+// }
+
+// function buildWeightedGraph(tracks) {
+// 	let graph = new jsnx.Graph();
+
+// 	let nodes = tracks.map(track => {
+// 		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
+// 	});
+
+// 	// create nodes
+// 	graph.addNodesFrom(nodes);
+
+// 	//let tracksDictionary = _.keyBy(tracks, 'id');
+// 	//let ids = _.keys(tracksDictionary);
+
+// 	let ids = nodes.map(node=>node[0]);
+// 	let weightedEdges = [];
+
+// 	for (let i=0; i < ids.length; i++) {
+// 		let nodeId = ids[i];
+// 		for (let j=i+1; j < ids.length-i; j++) {
+// 			let neighborId = ids[j];
+// 			let weight = calculateWeight(nodes[i][1], nodes[j][1]);
+// 			if (weight < FACTOR) {
+// 				weightedEdges.push([nodeId, neighborId, weight]);
+// 			}
+// 		}
+// 	}
+// 	graph.addWeightedEdgesFrom(weightedEdges);
+// 	return graph;
+// }
 
 
 function calculateWeight(track1, track2) {
@@ -114,36 +169,35 @@ function calculateWeight(track1, track2) {
 };
 
 
-// function buildCompleteGraph(tracks) {
-// 	let graph = new jsnx.Graph();
+function buildCompleteGraph(tracks) {
+	let graph = new jsnx.Graph();
 	
-// 	let nodes = tracks.map(track => {
-// 		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
-// 	});
+	let nodes = tracks.map(track => {
+		return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
+	});
 
-// 	// create nodes
-// 	graph.addNodesFrom(nodes);
+	// create nodes
+	graph.addNodesFrom(nodes);
 
-// 	// struct weighted edges as [node1id, node2id, { weight: distance }]
-// 	let tracksDictionary = _.keyBy(tracks, 'id');
-// 	let ids = _.keys(tracksDictionary);
-// 	let edges = combos(ids, 2);
-// 	let weightedEdges = _.map(edges, edge => {
-// 		let edgeTracks = edge.map(id => tracksDictionary[id]);
-// 		let weight = calculateWeight(...edgeTracks);
-// 		return [
-// 			edge[0],
-// 			edge[1],
-// 			weight
-// 		];
-// 	});
+	// struct weighted edges as [node1id, node2id, { weight: distance }]
+	let tracksDictionary = _.keyBy(tracks, 'id');
+	let ids = _.keys(tracksDictionary);
+	let edges = combos(ids, 2);
+	let weightedEdges = _.map(edges, edge => {
+		let edgeTracks = edge.map(id => tracksDictionary[id]);
+		let weight = calculateWeight(...edgeTracks);
+		return [
+			edge[0],
+			edge[1],
+			weight
+		];
+	});
 	
-// 	// add edges to graph
-// 	graph.addWeightedEdgesFrom(weightedEdges);
-// 	return graph;
-// }
+	// add edges to graph
+	graph.addWeightedEdgesFrom(weightedEdges);
+	return graph;
+}
 
-module.exports = createPlaylist;
 
 function getAudioFeatureRanges(originTrack, destTrack){
   var afRanges = {};
@@ -162,5 +216,14 @@ function expandAFranges(afRanges){
 		}
 		afRanges[af].push(temp);
 	}
+	return afRanges;
 }
 
+function sliceAFranges(afRanges, i){
+	for (var af in afRanges) {
+		afRanges[af] = afRanges[af].slice(i,i+2);
+	}
+	return afRanges;
+}
+
+module.exports = build1000graph;

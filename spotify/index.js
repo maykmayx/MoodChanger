@@ -82,11 +82,11 @@ let getPlaylistTracks = (userId, playlistId, offset) => {
   return spotifyApi.getPlaylistTracks(userId, playlistId, { offset: offset })
     .then(response => {
       let tracks = response.body.items.map(item => item.track);
-      log('Fetching playlist:', (response.body.offset + tracks.length / response.body.total * 100).toFixed(1) + '%');
+      log('Fetching playlist:', (response.body.total - tracks.length / response.body.total * 100).toFixed(1) + '%');
       if (!response.body.next) return addAudioFeatures(tracks);
       return getPlaylistTracks(userId, playlistId, offset + response.body.limit)
         .then(moreTracks => tracks.concat(moreTracks));
-    })
+    });
 };
 
 let expandPlaylist = (userId, playlistId, limit) => {

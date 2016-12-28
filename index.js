@@ -32,7 +32,7 @@ spotify(argv.id, argv.secret).then(api => {
 
   // preload a playlist into memory
   // results are an array of { seed_tracks: [ TRACK IDS ], recommendations: [ TRACKS ] }
-  expandPlaylist('spotify', '4hOKQuZbraPDIfaGbM3lKI', 1000).then(results => {
+  expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 10000).then(results => {
 
     // flatten tracks
     let tracks = _.flatten(results.map(result => result.recommendations));
