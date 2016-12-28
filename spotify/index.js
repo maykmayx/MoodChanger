@@ -143,7 +143,6 @@ module.exports = function initialize(clientId, clientSecret) {
     .then(response => spotifyApi.setAccessToken(response.body.access_token))
     .then(() => {
       return _.extend(spotifyApi, {
-        createPlaylist: createPlaylist,
         getPlaylistBySeeds: getPlaylistBySeeds,
         autocomplete: autocomplete,
         expandPlaylist: expandPlaylist

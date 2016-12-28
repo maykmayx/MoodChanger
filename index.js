@@ -45,23 +45,26 @@ spotify(argv.id, argv.secret).then(api => {
     console.time(logLabel);
     let graph = buildStaticGraph(results);
     console.timeEnd(logLabel);
-    let playlist = astar('55EelrA8250jCznurTC1Jb', '3Ev29Sj0ca0TD11oE8N0Bc', graph);
-    console.log(playlist)
-    
-    let createPlaylist = (origin, dest) => {
-      console.log('hi')
-      console.time('Creating playlist');
-      //let playlist = astar(origin.track.id, dest.track.id, graph);
-      console.log(playlist)
-      console.timeEnd('Creating playlist');
-      return playlist;
-    };
+    // let playlist = astar('55EelrA8250jCznurTC1Jb', '3Ev29Sj0ca0TD11oE8N0Bc', graph);
+    // console.log(playlist)
 
     // lookup path by origin and destination tracks
     app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {
       // api.createPlaylist(req.params.originTrack, req.params.destTrack)
-      let playlist = createPlaylist(req.params.originTrack, req.params.destTrack);
+      // let userId = '22gochlrm25jto43irdazuyqy';
+      // let playlistName = req.params.originTrack + ' to ' + req.params.destTrack;
+
+      console.time('Creating playlist');
+      let playlist = astar(req.params.originTrack, req.params.destTrack, graph);
+      console.log(playlist)
+      console.timeEnd('Creating playlist');
+
       Promise.resolve(playlist).then(res.json.bind(res)).catch(next);
+
+      // api.createPlaylist(userId, playlistName).then(response => {
+      //   let playlistId = response.body.playlist.id;
+      //   return api.addTracksToPlaylist(playlistId, playlist).then(() => playlistId);
+      // }).then(res.json.bind(res)).catch(next);
     });
 
     // fuzzy search for autocomplete

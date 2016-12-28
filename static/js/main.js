@@ -26,11 +26,17 @@ let createPlaylist = (origin, dest) => {
     .then(response => response.json()); 
 };
 
+let outputElement = document.querySelector('#output');
 let selectTrack = (id, trackId) => {
   selectedTracks[id] = TRACKS_CACHE[trackId];
+  outputElement.innerHTML = ''
+  // selectedTracks.origin = TRACKS_CACHE['55EelrA8250jCznurTC1Jb'];
+  // selectedTracks.dest = TRACKS_CACHE['3Ev29Sj0ca0TD11oE8N0Bc'];
+
   if (selectedTracks.origin && selectedTracks.dest) {
     createPlaylist(selectedTracks.origin.id, selectedTracks.dest.id).then(playlist => {
       console.log(playlist);
+      outputElement.innerHTML = playlist.join('\n') || 'No path found :(';
     });
   }
 };
