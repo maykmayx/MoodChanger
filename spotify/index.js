@@ -114,7 +114,7 @@ let expandPlaylist = (userId, playlistId, limit) => {
           .then(recommendations => {
             log('Fetching recommendations', (++i / totalChunks * 100).toFixed(1) + '%')
             return {
-              seed_tracks: seedTracksIds,
+              seed_tracks: seedTracks,
               recommendations: recommendations
             };
           })

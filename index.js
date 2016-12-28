@@ -4,6 +4,7 @@ let express = require('express');
 let serveStatic = require('serve-static');
 var argv = require('minimist')(process.argv.slice(2));
 let spotify = require('./spotify');
+let build1000Graph = require('./spotify/createPlaylist');
 let config = require('./config');
 let Fuse = require('fuse.js');
 let Promise = require('bluebird');
@@ -17,21 +18,22 @@ spotify(argv.id, argv.secret).then(api => {
 
   // preload a playlist into memory
   // results are an array of { seed_tracks: [ TRACK IDS ], recommendations: [ TRACKS ] }
-  api.expandPlaylist('spotify', '4hOKQuZbraPDIfaGbM3lKI', 100).then(results => {
-
+  api.expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 10000).then(results => {
     // flatten tracks
-    let tracks = _.flatten(results.map(result => result.recommendations));
-    
+    //let tracks = _.flatten(results.map(result => result.recommendations));
+
     // @TODO: build the graph here (now just gives 20 random tracks)
     // should be something like spotify.buildGraph(results)
-    let createPlaylist = (origin, dest) => {
-      let randomIds = _.sampleSize(tracks, 20).map(track => track.id);
-      let playlist = [];
+    console.log("hi")
+    let graph = build1000Graph(results);
+    // let createPlaylist = (origin, dest) => {
+    //   let randomIds = _.sampleSize(tracks, 20).map(track => track.id);
+    //   let playlist = [];
 
-      playlist.push(origin, ...randomIds, dest);
+    //   playlist.push(origin, ...randomIds, dest);
 
-      return playlist;
-    };
+    //   return playlist;
+    // };
 
     // lookup path by origin and destination tracks
     app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {
