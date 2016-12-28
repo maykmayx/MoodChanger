@@ -5,6 +5,7 @@ let serveStatic = require('serve-static');
 var argv = require('minimist')(process.argv.slice(2));
 let spotify = require('./spotify');
 let config = require('./config');
+var jsonfile = require('jsonfile')
 let Fuse = require('fuse.js');
 let Promise = require('bluebird');
 let _ = require('lodash');
@@ -15,13 +16,27 @@ spotify(argv.id, argv.secret).then(api => {
   // '1269437965', '2iBH9S3UXlrtUBxjffgZEh',
   // 'spotify', '4hOKQuZbraPDIfaGbM3lKI'
 
+  // get expanded playlist from cache
+  let expandPlaylist = (userId, playlistId, limit) => {
+    let filename = [userId, playlistId, limit].join('_') + '.json';
+    var file = __dirname + '/tmp/' + filename;
+
+    return Promise.promisify(jsonfile.readFile)(file).catch(err => {
+      console.log(err.toString(), 'creating', filename);
+      return api.expandPlaylist(userId, playlistId, limit).then(results => {
+        return Promise.promisify(jsonfile.writeFile)(file, results, { spaces: 2 })
+          .then(() => results);
+      });
+    });
+  };
+
   // preload a playlist into memory
   // results are an array of { seed_tracks: [ TRACK IDS ], recommendations: [ TRACKS ] }
-  api.expandPlaylist('spotify', '4hOKQuZbraPDIfaGbM3lKI', 100).then(results => {
+  expandPlaylist('spotify', '4hOKQuZbraPDIfaGbM3lKI', 1000).then(results => {
 
     // flatten tracks
     let tracks = _.flatten(results.map(result => result.recommendations));
-    
+
     // @TODO: build the graph here (now just gives 20 random tracks)
     // should be something like spotify.buildGraph(results)
     let createPlaylist = (origin, dest) => {

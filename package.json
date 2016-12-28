@@ -24,6 +24,7 @@
     "express": "^4.14.0",
     "fuse.js": "^2.6.1",
     "jsnetworkx": "^0.3.4",
+    "jsonfile": "^2.4.0",
     "lodash": "^4.17.2",
     "minimist": "^1.2.0",
     "serve-static": "^1.11.1",
