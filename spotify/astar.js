@@ -22,14 +22,12 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 		var closed = {};
 		var iteration = 1;
 
-		MAX_VALENCE_DIST = h(startNodeId, endNodeId, tracksGraph);
 
 		open[startNodeId] = startNodeId;
 		cameFrom[startNodeId] = false;
 		gCosts[startNodeId] = 0;
-		fCosts[startNodeId] = MAX_VALENCE_DIST;
-		final = []
-
+		fCosts[startNodeId] = h(startNodeId, endNodeId, tracksGraph);
+		console.log(h(startNodeId, endNodeId, tracksGraph))
 		while (true)
 		{
 			var bestId = null;
@@ -37,21 +35,18 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 			// Select the best candidate from the open nodes.
 			for (var nodeId in open)
 			{
-				if (bestId === null || fCosts[nodeId] < fCosts[bestId] || bestId === undefined) {
+				if (bestId === null || fCosts[nodeId] < fCosts[bestId]) {
 					bestId = nodeId;
 				}
 			}
 
 			if (bestId === null) {
-				console.log('hi')
-				fCosts[bestId] += 100;
-				bestId = cameFrom[bestId];
-
-				//throw "No path to goal";
+				console.log("No path to goal");
+				break;
 			}
-			console.log("checking node " + bestId);
-			final.push(bestId);
-			counter++;
+
+			// console.log("checking node " + bestId);
+
 			if (endNodeId == bestId) {
 				break;
 			
@@ -59,7 +54,6 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 			}
 
 			let edges = tracksGraph.edges(bestId, true);
-			console.log(edges.length);
 			for (let edge of edges) {
 				var toNodeId = edge[1];
 				var cost = edge[2];
@@ -71,11 +65,9 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 					var gCostExists = gCosts.hasOwnProperty(toNodeId);
 					if (!gCostExists || gCosts[toNodeId] > newGCost) {
 							gCosts[toNodeId] = newGCost;
-							fCosts[toNodeId] = h(toNodeId, endNodeId, tracksGraph);
+							fCosts[toNodeId] = newGCost + h(toNodeId, endNodeId, tracksGraph);
 							cameFrom[toNodeId] = bestId;
-						
 					}
-
 					open[toNodeId] = toNodeId;
 				}
 			};
@@ -103,7 +95,7 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 // 	open[start] = start;
 // 	cameFrom[start] = false;
 // 	gCosts[start] = 0;
-// 	fCosts[start] = alth(start, end, tracksGraph);
+// 	fCosts[start] = h(start, end, tracksGraph);
 // 	//inits:
 // 	while (!(_.isEmpty(open))) {
 // 		let current = null;
@@ -175,13 +167,13 @@ function alth(nodeId, destId, tracksGraph) {
 }
 
 function h(nodeId, destId, tracksGraph) {
-	// let curTrack = tracksGraph.node.get(nodeId);
-	// let destTrack = tracksGraph.node.get(destId);
+	let curTrack = tracksGraph.node.get(nodeId);
+	let destTrack = tracksGraph.node.get(destId);
 
-	// let v1 = _.values(curTrack);
-	// let v2 = _.values(destTrack);
-	//return Math.pow(distance(v1, v2),2);
-	return 0;
+	let v1 = _.values(curTrack);
+	let v2 = _.values(destTrack);
+	let dist = Math.pow(distance(v1, v2),2);
+	return dist; 
 }
 
 // PACKAGE
@@ -213,7 +205,7 @@ function h(nodeId, destId, tracksGraph) {
 
 // }
 
-// WHAT
+//WHAT
 // function astar(start, end, tracksGraph){
 // 	let cameFrom = {};
 // 	let fCosts = {};
@@ -225,7 +217,7 @@ function h(nodeId, destId, tracksGraph) {
 // 	open[start] = start;
 // 	cameFrom[start] = false;
 // 	gCosts[start] = 0;
-// 	fCosts[start] = alth(start, end, tracksGraph);
+// 	fCosts[start] = h(start, end, tracksGraph);
 
 // 	while (!(_.isEmpty(open))) {
 // 		let current = null;
@@ -258,13 +250,11 @@ function h(nodeId, destId, tracksGraph) {
 // 				continue;
 // 			}
 
-// 			let newGcost = cost;  // HERE only look at the next step
-// 			open[neighbor] = neighbor;
-			
-// 			// let gCostExists = gCosts.hasOwnProperty(neighbor);
-// 			// if (gCostExists && newGcost >= gCosts[neighbor]) {
-// 			// 	continue;
-// 			// }
+// 			let newGcost = cost;  // HERE only look at the next s	
+// 			let gCostExists = gCosts.hasOwnProperty(neighbor);
+// 			if (gCostExists && newGcost >= gCosts[neighbor]) {
+// 				continue;
+// 			}
 
 // 			cameFrom[neighbor] = current;
 // 			gCosts[neighbor] = newGcost;

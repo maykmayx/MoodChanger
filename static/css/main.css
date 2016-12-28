@@ -1,3 +1,14 @@
+* {
+	font-family: 'Montserrat', sans-serif;
+	text-align: center;
+}
 .awesomplete {
   width: 100%;
+}
+.container p {
+
+}
+.container h1 {
+	font-size:70px;
+	background-color: : #1DB954
 }

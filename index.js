@@ -35,7 +35,7 @@ spotify(argv.id, argv.secret).then(api => {
 
   // preload a playlist into memory
   // results are an array of { seed_tracks: [ TRACK IDS ], recommendations: [ TRACKS ] }
-  expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 2000).then(results => {
+  expandPlaylist('1269437965', '2iBH9S3UXlrtUBxjffgZEh', 10000).then(results => {
 
     // flatten tracks
     let tracks = _.flatten(results.map(result => result.recommendations));
@@ -45,10 +45,14 @@ spotify(argv.id, argv.secret).then(api => {
     console.time(logLabel);
     let graph = buildStaticGraph(results);
     console.timeEnd(logLabel);
+    let playlist = astar('55EelrA8250jCznurTC1Jb', '3Ev29Sj0ca0TD11oE8N0Bc', graph);
+    console.log(playlist)
     
     let createPlaylist = (origin, dest) => {
+      console.log('hi')
       console.time('Creating playlist');
-      let playlist = astar(origin, dest, graph);
+      //let playlist = astar(origin.track.id, dest.track.id, graph);
+      console.log(playlist)
       console.timeEnd('Creating playlist');
       return playlist;
     };

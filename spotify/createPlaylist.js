@@ -28,7 +28,6 @@ function buildStaticGraph(tracks){
 	let graph = new jsnx.Graph();
 	let seeds = _.flatten(tracks.map(track=>track.seed_tracks));
 	let nodes = seeds.map(track=> [track.id, _.pick(track.audio_features, AUDIO_FEATURES)])
-	
 	// let nodes = _.flatten(tracks.map(track=>tracks.seed_tracks)).map(track=> {
 	// 	return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
 	// });
@@ -41,21 +40,30 @@ function buildStaticGraph(tracks){
 	
 	let ids = nodes.map(node=>node[0]);
 	
-	for (let chunk of tracks) {
-	 	for (let recommendation of chunk.recommendations){
-	 		let isNode = _.find(ids, function(id) { return id === recommendation.id; });
-	 		console.log(isNode)
-	 		if (isNode !== undefined) {
-				for (let seedTrack in chunk.seed_tracks) {
-	 	 			graph.addEdge(seedTrack.id, recommendation.id);
-			 	}
-	 		}
+	// for (let chunk of tracks) {
+	//  	for (let recommendation of chunk.recommendations){
+	//  		let isNode = _.find(ids, function(id) { return id === recommendation.id; });
+	//  		if (isNode !== undefined) {
+	// 			for (let seedTrack in chunk.seed_tracks) {
+	//  	 			graph.addEdge(seedTrack.id, recommendation.id);
+	// 		 	}
+	//  		}
+	// 	}
+	//}
+	let weightedEdges = []
+	for (let i=0; i < ids.length; i++) {
+		let nodeId = ids[i];
+		for (let j=i+1; j < ids.length-i; j++) {
+			let neighborId = ids[j];
+			let weight = calculateWeight(nodes[i][1], nodes[j][1]);
+			if (weight < 0.13) {
+			weightedEdges.push([nodeId, neighborId, weight]);
+			}
 		}
 	}
-
-	//console.log(tracks[0].recommendations)
-	console.log("nodes: " + graph.nodes().length)
-	console.log("edges: " + graph.edges().length)	
+	graph.addWeightedEdgesFrom(weightedEdges);
+	console.log("nodes: " + graph.nodes().length);
+	console.log("edges: " + graph.edges().length);	
 	return graph;
 }
 
