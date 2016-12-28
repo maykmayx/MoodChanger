@@ -23,35 +23,39 @@ function createPlaylist(origin, dest) {
 }
 
   // tracks are an array of { seed_tracks: [ TRACKS ], recommendations: [ TRACKS ] }
-function build1000graph(tracks){
+function buildStaticGraph(tracks){
 	console.log("in")
 	let graph = new jsnx.Graph();
 	let seeds = _.flatten(tracks.map(track=>track.seed_tracks));
 	let nodes = seeds.map(track=> [track.id, _.pick(track.audio_features, AUDIO_FEATURES)])
+	
 	// let nodes = _.flatten(tracks.map(track=>tracks.seed_tracks)).map(track=> {
 	// 	return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
 	// });
-	console.log(nodes)
 
 	// // let nodes = tracks.map(track => {
 	// // 	return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]
 	// // });
-	
+	//console.log(nodes)
 	graph.addNodesFrom(nodes);
 	
 	let ids = nodes.map(node=>node[0]);
 	
-	for (let chunk in tracks) {
-		for (let recommendation in chunk.recommendations){
-			let isNode = ids.hasOwnProperty(recommendation.id);
-			if (isNode) {
-				let nextNode = recommendation.map(track=>{return [track.id, _.pick(track.audio_features, AUDIO_FEATURES)]})
+	for (let chunk of tracks) {
+	 	for (let recommendation of chunk.recommendations){
+	 		let isNode = _.find(ids, function(id) { return id === recommendation.id; });
+	 		console.log(isNode)
+	 		if (isNode !== undefined) {
 				for (let seedTrack in chunk.seed_tracks) {
-					graph.addEdge(seedTrack, nextNode);
-				}
-			}
+	 	 			graph.addEdge(seedTrack.id, recommendation.id);
+			 	}
+	 		}
 		}
 	}
+
+	//console.log(tracks[0].recommendations)
+	console.log("nodes: " + graph.nodes().length)
+	console.log("edges: " + graph.edges().length)	
 	return graph;
 }
 
@@ -226,4 +230,4 @@ function sliceAFranges(afRanges, i){
 	return afRanges;
 }
 
-module.exports = build1000graph;
+module.exports = buildStaticGraph;

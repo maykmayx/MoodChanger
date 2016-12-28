@@ -53,8 +53,6 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 			final.push(bestId);
 			counter++;
 			if (endNodeId == bestId) {
-				console.log("counter: "+counter)
-				console.log("final: " +final)
 				break;
 			
 				// We have a solution!
@@ -177,17 +175,13 @@ function alth(nodeId, destId, tracksGraph) {
 }
 
 function h(nodeId, destId, tracksGraph) {
-	let curTrack = tracksGraph.node.get(nodeId);
-	let destTrack = tracksGraph.node.get(destId);
+	// let curTrack = tracksGraph.node.get(nodeId);
+	// let destTrack = tracksGraph.node.get(destId);
 
-	let v1 = _.values(curTrack);
-	let v2 = _.values(destTrack);
-
-	let dist = distance(v1, v2);
-		if (dist > 1) {
-		dist = 10;
-	}
-	return dist;
+	// let v1 = _.values(curTrack);
+	// let v2 = _.values(destTrack);
+	//return Math.pow(distance(v1, v2),2);
+	return 0;
 }
 
 // PACKAGE

@@ -10,6 +10,8 @@ let Fuse = require('fuse.js');
 let Promise = require('bluebird');
 let _ = require('lodash');
 let app = express();
+let buildStaticGraph = require('./spotify/createPlaylist.js');
+let astar = require('./spotify/astar.js');
 
 spotify(argv.id, argv.secret).then(api => {
 
@@ -36,17 +38,21 @@ spotify(argv.id, argv.secret).then(api => {
 
     // flatten tracks
     let tracks = _.flatten(results.map(result => result.recommendations));
-
-    // @TODO: build the graph here (now just gives 20 random tracks)
-    // should be something like spotify.buildGraph(results)
+    let graph = buildStaticGraph(results);
     let createPlaylist = (origin, dest) => {
-      let randomIds = _.sampleSize(tracks, 20).map(track => track.id);
-      let playlist = [];
-
-      playlist.push(origin, ...randomIds, dest);
-
+      let path = astar(origin.track.id, dest.track.id, graph);
+      playlist.push(path);
       return playlist;
-    };
+    }
+    /* tmp - create random playlist */
+    // let createPlaylist = (origin, dest) => {
+    //   let randomIds = _.sampleSize(tracks, 20).map(track => track.id);
+    //   let playlist = [];
+
+    //   playlist.push(origin, ...randomIds, dest);
+
+    //   return playlist;
+    // };
 
     // lookup path by origin and destination tracks
     app.get('/api/playlist/:originTrack/:destTrack', (req, res, next) => {
