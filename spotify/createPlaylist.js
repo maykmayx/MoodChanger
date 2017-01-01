@@ -56,7 +56,7 @@ function buildStaticGraph(tracks){
 		for (let j=i+1; j < ids.length-i; j++) {
 			let neighborId = ids[j];
 			let weight = calculateWeight(nodes[i][1], nodes[j][1]);
-			if (weight < 0.13) {
+			if (weight < 0.1) {
 			weightedEdges.push([nodeId, neighborId, weight]);
 			}
 		}

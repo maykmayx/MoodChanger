@@ -22,12 +22,12 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 		var closed = {};
 		var iteration = 1;
 
+		console.log(startNodeId, endNodeId)
 
 		open[startNodeId] = startNodeId;
 		cameFrom[startNodeId] = false;
 		gCosts[startNodeId] = 0;
 		fCosts[startNodeId] = h(startNodeId, endNodeId, tracksGraph);
-		console.log(h(startNodeId, endNodeId, tracksGraph))
 		while (true)
 		{
 			var bestId = null;
@@ -39,7 +39,7 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 					bestId = nodeId;
 				}
 			}
-
+			counter ++;
 			if (bestId === null) {
 				console.log("No path to goal");
 				break;
@@ -48,6 +48,7 @@ function astar(startNodeId, endNodeId, tracksGraph) {
 			// console.log("checking node " + bestId);
 
 			if (endNodeId == bestId) {
+				console.log("visited " + counter + " nodes");
 				break;
 			
 				// We have a solution!
@@ -167,13 +168,14 @@ function alth(nodeId, destId, tracksGraph) {
 }
 
 function h(nodeId, destId, tracksGraph) {
-	let curTrack = tracksGraph.node.get(nodeId);
-	let destTrack = tracksGraph.node.get(destId);
+	// let curTrack = tracksGraph.node.get(nodeId);
+	// let destTrack = tracksGraph.node.get(destId);
 
-	let v1 = _.values(curTrack);
-	let v2 = _.values(destTrack);
-	let dist = Math.pow(distance(v1, v2),2);
-	return dist; 
+	// let v1 = _.values(curTrack);
+	// let v2 = _.values(destTrack);
+	// let dist = Math.pow(distance(v1, v2),2);
+	// return dist; 
+	return 0;
 }
 
 // PACKAGE
